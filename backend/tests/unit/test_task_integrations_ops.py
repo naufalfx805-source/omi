@@ -204,3 +204,54 @@ async def test_create_task_unexpected_failure_hides_exception_text():
         "error": "Failed to create task due to an internal error",
         "error_code": "in_doubt",
     }
+
+
+# ---------------------------------------------------------------------------
+# compute_expires_at
+# ---------------------------------------------------------------------------
+
+
+class TestComputeExpiresAt:
+    """Verify that compute_expires_at rejects non-numeric, non-finite,
+    and out-of-range expires_in values instead of crashing."""
+
+    def test_valid_int(self):
+        result = ops.compute_expires_at(3600)
+        assert result is not None
+        assert result.endswith("+00:00") or "T" in result
+
+    def test_valid_float(self):
+        assert ops.compute_expires_at(3600.5) is not None
+
+    def test_valid_numeric_string(self):
+        assert ops.compute_expires_at("7200") is not None
+
+    def test_none_returns_none(self):
+        assert ops.compute_expires_at(None) is None
+
+    def test_bool_true_returns_none(self):
+        assert ops.compute_expires_at(True) is None
+
+    def test_bool_false_returns_none(self):
+        assert ops.compute_expires_at(False) is None
+
+    def test_zero_returns_none(self):
+        assert ops.compute_expires_at(0) is None
+
+    def test_negative_returns_none(self):
+        assert ops.compute_expires_at(-3600) is None
+
+    def test_nan_returns_none(self):
+        assert ops.compute_expires_at(float("nan")) is None
+
+    def test_inf_returns_none(self):
+        assert ops.compute_expires_at(float("inf")) is None
+
+    def test_non_numeric_string_returns_none(self):
+        assert ops.compute_expires_at("not-a-number") is None
+
+    def test_empty_string_returns_none(self):
+        assert ops.compute_expires_at("") is None
+
+    def test_overflow_returns_none(self):
+        assert ops.compute_expires_at(1e308) is None
